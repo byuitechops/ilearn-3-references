@@ -14,6 +14,8 @@ module.exports = (course, stepCallback) => {
     course.newInfo('adobeConnectRefs', []);
     course.newInfo('googleHangoutRefs', []);
     course.newInfo('adobeFlashRefs', []);
+    course.newInfo('inlineJSRefs', []);
+    course.newInfo('inlineStyleRefs', []);
 
     course.content.forEach(file => {
         if (file.name === 'imsmanifest.xml' ||
@@ -57,6 +59,18 @@ module.exports = (course, stepCallback) => {
                 ex: /\<a[^\>]*href=("|')[^"']*\.swf("|')\s*\>/ig, // links to Adobe Flash
                 action: () => {
                     course.info.adobeFlashRefs.push(file.name);
+                }
+            },
+            {
+                ex: /\<!\[CDATA\[[\s\S]*\]\]\>/g, // inline JavaScript
+                action: () => {
+                    course.info.inlineJSRefs.push(file.name);
+                }
+            },
+            {
+                ex: /\<style\>/g, // style tags
+                action: () => {
+                    course.info.inlineStyleRefs.push(file.name);
                 }
             }
         ];
