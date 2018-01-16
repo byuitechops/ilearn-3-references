@@ -13,6 +13,7 @@ module.exports = (course, stepCallback) => {
     course.newInfo('brainhoneyRefs', []);
     course.newInfo('adobeConnectRefs', []);
     course.newInfo('googleHangoutRefs', []);
+    course.newInfo('adobeFlashRefs', []);
 
     course.content.forEach(file => {
         if (file.name === 'imsmanifest.xml' ||
@@ -22,8 +23,7 @@ module.exports = (course, stepCallback) => {
         var guts = '';
         var changed = false;
         // RegEx matches and related actions
-        var regs = [
-            {
+        var regs = [{
                 ex: /i\s*-?\s*learn\s*3\.?0?/ig, // I-Learn 3.0 References (and variations)
                 action: () => {
                     guts = guts.replace(/i\s*-?\s*learn\s*3\.?0?/ig, 'I-Learn');
@@ -31,20 +31,34 @@ module.exports = (course, stepCallback) => {
             },
             {
                 ex: /(brightspace)(?!\.com)/ig, // Brightspace References
-                action: () => {course.info.brightspaceRefs.push(file.name)}
+                action: () => {
+                    course.info.brightspaceRefs.push(file.name)
+                }
             },
             {
                 ex: /brainhoney/ig, // Brainhoney References
-                action: () => {course.info.brainhoneyRefs.push(file.name)}
+                action: () => {
+                    course.info.brainhoneyRefs.push(file.name)
+                }
             },
             {
                 ex: /adobe\s*connect/ig, // Adobe Connect References
-                action: () => {course.info.adobeConnectRefs.push(file.name)}
+                action: () => {
+                    course.info.adobeConnectRefs.push(file.name)
+                }
             },
             {
                 ex: /((google\s*)?hangouts?(\s*on\s*air)?)|(HOA)/ig, // Google Hangout References
-                action: () => {course.info.googleHangoutRefs.push(file.name)}
+                action: () => {
+                    course.info.googleHangoutRefs.push(file.name)
+                }
             },
+            {
+                ex: /\<a[^\>]*href=("|')[^"']*\.swf("|')\s*\>/ig, // links to Adobe Flash
+                action: () => {
+                    course.info.adobeFlashRefs.push(file.name);
+                }
+            }
         ];
 
         function findRegs(callback) {
@@ -64,7 +78,10 @@ module.exports = (course, stepCallback) => {
                 if (changed) {
                     course.success('ilearn-3-references', `Changed references/Stored Reference for ${file.name}`);
                 }
-                file.dom = cheerio.load(guts, {xmlMode: true, decodeEntities: false});
+                file.dom = cheerio.load(guts, {
+                    xmlMode: true,
+                    decodeEntities: false
+                });
             });
         } else {
             guts = file.dom.html();
@@ -72,7 +89,9 @@ module.exports = (course, stepCallback) => {
                 if (changed) {
                     course.success('ilearn-3-references', `Replaced or Stored Reference for ${file.name}`);
                 }
-                file.dom = cheerio.load(guts, {decodeEntities: false});
+                file.dom = cheerio.load(guts, {
+                    decodeEntities: false
+                });
             });
         }
 
