@@ -7,7 +7,6 @@
 const cheerio = require('cheerio');
 
 module.exports = (course, stepCallback) => {
-    course.addModuleReport('ilearn-3-references');
 
     course.newInfo('brightspaceRefs', []);
     course.newInfo('brainhoneyRefs', []);
@@ -23,75 +22,89 @@ module.exports = (course, stepCallback) => {
             return true;
         }
         var guts = '';
-        var changed = false;
-        // RegEx matches and related actions
+
+        /* RegEx matches and related actions */
         var regs = [{
                 ex: /i\s*-?\s*learn\s*3\.?0?/ig, // I-Learn 3.0 References (and variations)
                 action: () => {
                     guts = guts.replace(/i\s*-?\s*learn\s*3\.?0?/ig, 'I-Learn');
+                    course.log('"I-Learn 3.0" Changed to "I-Learn"', {
+                        'File Name': file.name
+                    });
                 }
             },
             {
                 ex: /(brightspace)(?!\.com)/ig, // Brightspace References
                 action: () => {
-                    course.info.brightspaceRefs.push(file.name)
+                    course.log('Contains Brightspace References', {
+                        'File Name': file.name
+                    });
                 }
             },
             {
                 ex: /brainhoney/ig, // Brainhoney References
                 action: () => {
-                    course.info.brainhoneyRefs.push(file.name)
+                    course.log('Contains Brainhoney References', {
+                        'File Name': file.name
+                    });
                 }
             },
             {
                 ex: /adobe\s*connect/ig, // Adobe Connect References
                 action: () => {
-                    course.info.adobeConnectRefs.push(file.name)
+                    course.log('Contains Adobe Connect References', {
+                        'File Name': file.name
+                    });
                 }
             },
             {
                 ex: /((google\s*)?hangouts?(\s*on\s*air)?)|(HOA)/ig, // Google Hangout References
                 action: () => {
-                    course.info.googleHangoutRefs.push(file.name)
+                    course.log('Contains Google Hangouts References', {
+                        'File Name': file.name
+                    });
                 }
             },
             {
                 ex: /\<a[^\>]*href=("|')[^"']*\.swf("|')\s*\>/ig, // links to Adobe Flash
                 action: () => {
-                    course.info.adobeFlashRefs.push(file.name);
+                    course.log('Contains Adobe Flash References', {
+                        'File Name': file.name
+                    });
                 }
             },
             {
                 ex: /\<!\[CDATA\[[\s\S]*\]\]\>/g, // inline JavaScript
                 action: () => {
-                    course.info.inlineJSRefs.push(file.name);
+                    course.log('Contains Inline Javascript', {
+                        'File Name': file.name
+                    });
                 }
             },
             {
                 ex: /\<style\>/g, // style tags
                 action: () => {
-                    course.info.inlineStyleRefs.push(file.name);
+                    course.log('Contains Inline CSS (Style Tags)', {
+                        'File Name': file.name
+                    });
                 }
             }
         ];
 
+        /* Runs the regex tests on the file's contents */
         function findRegs(callback) {
             regs.forEach(regEx => {
                 if (regEx.ex.test(guts)) {
                     regEx.action();
-                    changed = true;
                 }
             });
             callback();
         }
 
-        // Figure out if it is XML or HTML, then replace I-Learn 3 References
+        /* Figure out if it is XML or HTML, then replace I-Learn 3 References */
         if (file.ext === '.xml') {
             guts = file.dom.xml();
             findRegs(() => {
-                if (changed) {
-                    course.success('ilearn-3-references', `Changed references/Stored Reference for ${file.name}`);
-                }
                 file.dom = cheerio.load(guts, {
                     xmlMode: true,
                     decodeEntities: false
@@ -100,9 +113,6 @@ module.exports = (course, stepCallback) => {
         } else {
             guts = file.dom.html();
             findRegs(() => {
-                if (changed) {
-                    course.success('ilearn-3-references', `Replaced or Stored Reference for ${file.name}`);
-                }
                 file.dom = cheerio.load(guts, {
                     decodeEntities: false
                 });
